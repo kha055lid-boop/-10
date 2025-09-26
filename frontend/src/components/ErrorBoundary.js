@@ -1,95 +1,56 @@
+// 21. إنشاء ملف ErrorBoundary.js
 import React from 'react';
 
-class ErrorBoundary extends React.Component {
+export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
-    });
+    // يمكنك إرسال الخطأ لخدمة تسجيل الأخطاء
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
   render() {
-    if (this.state.hasError) {
+    const { hasError, error } = this.state;
+    const { children, FallbackComponent } = this.props;
+
+    if (hasError) {
+      // عرض مكون الخطأ المخصص
+      if (FallbackComponent) {
+        return <FallbackComponent error={error} onReset={this.handleReset} />;
+      }
+      
+      // عرض رسالة الخطأ الافتراضية
       return (
-        <div style={{
-          padding: '20px',
-          textAlign: 'center',
-          backgroundColor: '#f5f5f5',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <h2 style={{ color: '#d32f2f', marginBottom: '20px' }}>
-            🚨 حدث خطأ في التطبيق
-          </h2>
-          <p style={{ marginBottom: '20px', color: '#666' }}>
-            يرجى إعادة تحميل الصفحة أو التواصل مع الدعم الفني
-          </p>
-          <div style={{ marginBottom: '20px' }}>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                backgroundColor: '#7B68EE',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                marginRight: '10px'
-              }}
-            >
-              🔄 إعادة تحميل الصفحة
-            </button>
-            <button
-              onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
-              style={{
-                backgroundColor: '#4caf50',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '5px',
-                cursor: 'pointer'
-              }}
-            >
-              🔧 إعادة المحاولة
-            </button>
-          </div>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details style={{ textAlign: 'left', maxWidth: '800px', marginTop: '20px' }}>
-              <summary style={{ cursor: 'pointer', color: '#d32f2f' }}>
-                تفاصيل الخطأ (للمطورين)
-              </summary>
-              <pre style={{
-                backgroundColor: '#f5f5f5',
-                padding: '10px',
-                borderRadius: '5px',
-                overflow: 'auto',
-                fontSize: '12px',
-                marginTop: '10px'
-              }}>
-                {this.state.error.toString()}
-                {this.state.errorInfo.componentStack}
-              </pre>
-            </details>
-          )}
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <h2>حدث خطأ غير متوقع</h2>
+          <p>نعتذر عن حدوث خطأ. يرجى تحديث الصفحة أو المحاولة لاحقاً.</p>
+          <button onClick={this.handleReset}>إعادة المحاولة</button>
+          <details style={{ marginTop: '20px', textAlign: 'left' }}>
+            <summary>تفاصيل الخطأ</summary>
+            <pre style={{ whiteSpace: 'pre-wrap' }}>
+              {error?.toString() || 'لا توجد تفاصيل إضافية'}
+            </pre>
+          </details>
         </div>
       );
     }
 
-    return this.props.children;
+    return children;
   }
 }
 
-export default ErrorBoundary;
+// القيم الافتراضية للخصائص
+ErrorBoundary.defaultProps = {
+  FallbackComponent: null,
+};
